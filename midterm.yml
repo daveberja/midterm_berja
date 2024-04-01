@@ -1,0 +1,42 @@
+---
+- name: Configure Firewall Rules
+  hosts: all
+  become: true
+  tasks:
+    - name: Install and enable Firewall (Ubuntu)
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - ufw
+      when: ansible_distribution == "Ubuntu"
+
+
+    - name: Install and enable Firewall (CentOS)
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - firewalld
+      when: ansible_distribution == "CentOS"
+
+
+    - name: Configure Firewall Rules (Ubuntu)
+      ufw:
+        rule: "{{ item.action }}"
+        state: "{{ item.state }}"
+      loop:
+        - { name: 'Allow SSH', action: 'allow', state: 'enabled', port: 22 }
+        - { name: 'Allow HTTP', action: 'allow', state: 'enabled', port: 80 }
+        - { name: 'Allow HTTPS', action: 'allow', state: 'enabled', port: 443 }
+      when: ansible_distribution == "Ubuntu"
+
+
+    - name: Configure Firewall Rules (CentOS)
+      firewalld:
+        zone: public
+        service: "{{ item.service }}"
+        state: "{{ item.state }}"
+      loop:
+        - { service: ssh, state: enabled }
+      when: ansible_distribution == "CentOS"
